@@ -183,8 +183,31 @@ int main(int argc, char ** argv)
 	color_tab[10] = CV_RGB(255,0,100);
 	color_tab[11] = CV_RGB(255,100,0);
 
+	//the font variable    
+	CvFont font;    
+	double hScale=1;   
+	double vScale=1;    
+	int lineWidth=2;// 相当于写字的线条    
+	// 初始化字体   
+	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);//初始化字体，准备写到图片上的
+
+	for( int i = 0; i < results->total; i++ )  
+	{
+		float* p = ( float* )cvGetSeqElem( results, i );  
+		//霍夫圆变换  
+		CvPoint pt = cvPoint( cvRound( p[0] ), cvRound( p[1] ) );  
+		int x1 = cvRound(p[0]);
+		int y1 = cvRound(p[1]);
+		int xpos = (x1 - bst_x0)/(double)bst_xstep + 0.5 + 1;
+		int ypos = (y1 - bst_y0)/(double)bst_ystep + 0.5 + 1;
+		ostringstream oss;
+		oss<<ypos<<","<<xpos;
+		cvPutText(srcImage, oss.str().c_str(), cvPoint(x1-30,y1-15), &font, CV_RGB(0,255,0));
+	}
+
+	// opencv line fit
 	vector<int> xclusters(xcorners.size(), 0);
-	vector<vector<int> > xlines(nx, vector<int>(0));
+	int count = 0;
 	for(int i = 0; i < nx; i++)
 	{
 		int x1 = bst_x0 + i * bst_xstep;
@@ -196,7 +219,7 @@ int main(int argc, char ** argv)
 				if(xclusters[j] == 0)
 				{
 					xclusters[j] = i+1;
-					xlines[i].push_back(j);
+					count++;
 				}
 				else
 				{
@@ -207,106 +230,43 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	// opencv line fit
-	
-	//the font variable    
-	CvFont font;    
-	double hScale=1;   
-	double vScale=1;    
-	int lineWidth=2;// 相当于写字的线条    
-	// 初始化字体   
-	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);//初始化字体，准备写到图片上的
-
+	CvPoint* points = (CvPoint*)malloc( count* sizeof(points[0]));
+	CvMat pointMat = cvMat( 1, count, CV_32SC2, points ); //点集, 存储count个随机点points
+	float params[4]; //输出的直线参数。2D 拟合情况下，它是包含 4 个浮点数的数组 (vx, vy, x0, y0)  
+	int j = 0;
+	vector<int> sumY(nx, 0);
+	vector<int> countY(nx, 0);
+	for(int i = 0; i < xclusters.size(); i++)
+	{
+		int clusterId = xclusters[i];
+		if(clusterId > 0)
+		{
+			points[j].x = xcorners[i] - (clusterId-1) * bst_xstep;
+			points[j].y = ycorners[i];
+			sumY[clusterId-1] += ycorners[i];
+			countY[clusterId-1]++;
+			j++;
+		}
+	}
+	cvFitLine( &pointMat, CV_DIST_L1, 1, 0.001, 0.001, params ); // find the optimal line 曲线拟合
+	double vx = params[0];
+	double vy = params[1];
+	double x0 = params[2];
+	double y0 = params[3];
 	for(int i = 0; i < nx; i++)
 	{
-		cout<<i<<" : ";
-		int x = bst_x0 + i*bst_xstep;
-		vector<int> xline = xlines[i];
 		CvScalar color = color_tab[i+1];
-		int count = xline.size();
-		float vx, vy, x0, y0;
-
-		if(1)
-		{
-			CvPoint* points = (CvPoint*)malloc( count * sizeof(points[0]));
-			CvMat pointMat = cvMat( 1, count, CV_32SC2, points ); //点集, 存储count个随机点points
-			float params[4]; //输出的直线参数。2D 拟合情况下，它是包含 4 个浮点数的数组 (vx, vy, x0, y0)  
-			//其中 (vx, vy) 是线的单位向量而 (x0, y0) 是线上的某个点
-			for(int j = 0; j < count; j++)
-			{
-				int id = xline[j];
-				points[j].x = xcorners[id];
-				points[j].y = ycorners[id];
-			}
-			cvFitLine( &pointMat, CV_DIST_L1, 1, 0.001, 0.001, params ); // find the optimal line 曲线拟合
-			//cvLine(srcImage, cvPoint(x, bst_y0), cvPoint(x, bst_y0 + (ny-1)*bst_ystep), cvScalar(255, 0, 0));
-
-			vx = params[0];
-			vy = params[1];
-			x0 = params[2];
-			y0 = params[3];
-		}
-		else
-		{
-			double sumx = 0, sumy = 0, avgx = 0, avgy = 0;
-			double sumxx = 0, sumxy = 0, sumyy = 0;
-			for(int j = 0; j < count; j++)
-			{
-				int id = xline[j];
-				double x = xcorners[id];
-				double y = ycorners[id];
-				sumx += x;
-				sumy += y;
-				sumxx += x*x;
-				sumxy += x*y;
-				sumyy += y*y;
-			}
-			avgx = sumx/count;
-			avgy = sumy/count;
-			double varxx = sumxx - count*avgx*avgx;
-			double varxy = sumxy - count*avgx*avgy;
-			double varyy = sumyy - count*avgy*avgy;
-			if(1)
-			{
-				// rho = x*cos(theta) + y*sin(theta)
-				double a = varxx;
-				double b = 2*varxy;
-				double c = varyy;
-				double theta = fabs(a-c) > 0.000001 ? 0.5*atan(b/(a-c)) : CV_PI/2.0;
-				vx = sin(-theta);
-				vy = cos(-theta);
-				x0 = avgx;
-				y0 = avgy;
-			}
-			else // 线性回归最好别用
-			{
-				// y = k*x + b;
-				if(varxx > 0.000001)
-				{
-					double k = varxy/varxx;
-					vx = 1.0/sqrt(1.0 + k*k);
-					vy = k/sqrt(1.0 + k*k);
-				}
-				else
-				{
-					vx = 0.0;
-					vy = 1.0;
-				}
-				x0 = avgx;
-				y0 = avgy;
-			}
-		}
-		cout<<"params ("<<vx<<","<<vy<<","<<x0<<","<<y0<<")"<<endl;
-		//x = x0 + vx*(y-y0)/vy;
-		int leftx = fabs(vy) > 0.00000001 ? x0 + vx * (0 - y0)/vy : x0;
-		int rightx = fabs(vy) > 0.00000001 ? x0 + vx * (srcImage->height -1 - y0)/vy : x0;
-		cvLine(srcImage, cvPoint(leftx, 0), cvPoint(x0, y0), color);
+		double mx = x0 + i * bst_xstep;
+		double my = sumY[i]/countY[i];
+		//x = mx + vx*(y-my)/vy;
+		int leftx = fabs(vy) > 0.00000001 ? mx + vx * (0 - my)/vy : mx;
+		int rightx = fabs(vy) > 0.00000001 ? mx + vx * (srcImage->height -1 - my)/vy : mx;
+		cvLine(srcImage, cvPoint(leftx, 0), cvPoint(mx, my), color);
 		color.val[0] = 255 - color.val[0];
 		color.val[1] = 255 - color.val[1];
 		color.val[2] = 255 - color.val[2];
-		cvLine(srcImage, cvPoint(x0,y0), cvPoint(rightx, srcImage->height-1), color);
+		cvLine(srcImage, cvPoint(mx,my), cvPoint(rightx, srcImage->height-1), color);
 	}
-
 
 	for(int i = 0; i < ny; i++)
 	{
@@ -325,23 +285,9 @@ int main(int argc, char ** argv)
 		{
 			ostringstream oss;
 			oss<<clusterId;
-			cvPutText(srcImage, oss.str().c_str(), cvPoint(x-20,y), &font, CV_RGB(0,255,0));
+			cvPutText(srcImage, oss.str().c_str(), cvPoint(x-20,y+15), &font, CV_RGB(0,255,255));
 		}
 	}	
-
-	for( int i = 0; i < results->total; i++ )  
-	{
-		float* p = ( float* )cvGetSeqElem( results, i );  
-		//霍夫圆变换  
-		CvPoint pt = cvPoint( cvRound( p[0] ), cvRound( p[1] ) );  
-		int x1 = cvRound(p[0]);
-		int y1 = cvRound(p[1]);
-		int xpos = (x1 - bst_x0)/(double)bst_xstep + 0.5 + 1;
-		int ypos = (y1 - bst_y0)/(double)bst_ystep + 0.5 + 1;
-		ostringstream oss;
-		oss<<ypos<<","<<xpos;
-		//cvPutText(srcImage, oss.str().c_str(), cvPoint(x1-30,y1), &font, CV_RGB(0,255,0));
-	}
 
 	filename = filename + ".fit.png";
 	cvSaveImage(filename.c_str(),srcImage);  

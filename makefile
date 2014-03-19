@@ -1,5 +1,6 @@
 all:
-	g++ -o fitlines fitlines.cpp `pkg-config --cflags --libs opencv`
+	g++ -o findfourcorners findfourcorners.cpp `pkg-config --cflags --libs opencv`
+	#g++ -o fitlines fitlines.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o houghlines houghlines.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o kmeanslines kmeanslines.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o chessgrid chessgrid.cpp `pkg-config --cflags --libs opencv`
