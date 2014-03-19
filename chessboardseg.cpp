@@ -10,6 +10,20 @@ using namespace cv;
 using namespace std;
 #define DEBUG 0
 
+void rotateImage(IplImage* img, IplImage *img_rotate,int degree)  
+{  
+    //旋转中心为图像中心  
+    CvPoint2D32f center;    
+    center.x=float (img->width/2.0+0.5);  
+    center.y=float (img->height/2.0+0.5);  
+    //计算二维旋转的仿射变换矩阵  
+    float m[6];              
+    CvMat M = cvMat( 2, 3, CV_32F, m );  
+    cv2DRotationMatrix( center, degree,1, &M);  
+    //变换图像，并用黑色填充其余值  
+    cvWarpAffine(img,img_rotate, &M,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS,cvScalarAll(0) );  
+}  
+
 IplImage * cropImage(IplImage * src, int x, int y, int width, int height)
 {
 	cvSetImageROI(src, cvRect(x, y, width , height));
@@ -217,17 +231,14 @@ int main(int argc, char ** argv)
 	if(max_h + 20 < height) max_h = max_h + 20;
 	width = max_w - min_w + 1;
 	height = max_h - min_h + 1;
-	IplImage * boardImg = cropImage(distImg, min_w, min_h, width, height);
-	
-	double theta = bworient_angle(boardImg);	
-	cout<<"theta = "<<theta * 180/3.1415926<<endl;
+	IplImage * boardImg1 = cropImage(image0, min_w, min_h, width, height);
 
 	string filename6 = filename + ".chess.png";
-	cvSaveImage(filename6.c_str(), boardImg);
+	cvSaveImage(filename6.c_str(), boardImg1);
 
 	cvReleaseImage(&image0);
 	cvReleaseImage(&distImg);
-	cvReleaseImage(&boardImg);
+	cvReleaseImage(&boardImg1);
 	delete [] distData; distData = 0;
 	return 0;
 

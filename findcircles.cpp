@@ -6,6 +6,7 @@ using namespace std;
 
 int main(int argc, char** argv)  
 {  
+	IplImage* orig = cvLoadImage( argv[1], 1 );  
 	IplImage* src = cvLoadImage( argv[1], 0 );  
 	IplImage* dst = cvLoadImage( argv[1], 0 );  
 	CvMemStorage* storage = cvCreateMemStorage(0);  
@@ -29,19 +30,16 @@ int main(int argc, char** argv)
 		//霍夫圆变换  
 		CvPoint pt = cvPoint( cvRound( p[0] ), cvRound( p[1] ) );  
 		cvCircle(  
-				dst,  
+				orig,  
 				pt,  //确定圆心  
 				cvRound( p[2] ),  //确定半径  
-				CV_RGB( 0xff, 0xff, 0xff )  
+				CV_RGB( 0x0, 0x0, 0xff )  
 				);  //画圆函数  
 	}  
 	cout<<endl;
-	/*cvNamedWindow( "cvHoughCircles", 1 );  
-	cvShowImage( "cvHoughCircles", dst );  
-	cvWaitKey(0);  
-*/
+
 	string filename = argv[1];
 	filename = filename + ".cirles.png";
-	cvSaveImage(filename.c_str(), dst);
+	cvSaveImage(filename.c_str(), orig);
 	return 0;  
 } 
