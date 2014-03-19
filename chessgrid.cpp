@@ -129,6 +129,8 @@ int main(int argc, char ** argv)
 	cvReleaseImage(&corners1);  
 	cvReleaseImage(&corners2);  
 
+	cvClearSeq(results);
+	cvReleaseMemStorage(&storage);
 	cvWaitKey(0);  
 	return 0;  
 } 

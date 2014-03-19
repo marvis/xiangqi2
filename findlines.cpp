@@ -28,5 +28,7 @@ int main(int argc, char** argv)
 	filename = filename + ".lines.png";
 	cvSaveImage( filename.c_str(), color_dst );  
 
+	cvClearSeq(lines);
+	cvReleaseMemStorage(&storage);
 	return 0;  
 } 

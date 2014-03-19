@@ -151,6 +151,10 @@ int main(int argc, char ** argv)
 	cvReleaseImage(&dst);
 	cvReleaseImage(&color_dst);
 
+	cvClearSeq(results);
+	cvClearSeq(lines);
+	cvReleaseMemStorage(&storage1);
+	cvReleaseMemStorage(&storage2);
 	cvWaitKey(0);  
 	return 0;  
 } 

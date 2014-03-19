@@ -175,5 +175,7 @@ int main(int argc, char ** argv)
 	cvReleaseMat(&ylocs);
 	cvReleaseMat(&yclusters);
 
+	cvClearSeq(results);
+	cvReleaseMemStorage(&storage);
 	return 0;  
 } 

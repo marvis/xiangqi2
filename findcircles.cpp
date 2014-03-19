@@ -41,5 +41,8 @@ int main(int argc, char** argv)
 	string filename = argv[1];
 	filename = filename + ".cirles.png";
 	cvSaveImage(filename.c_str(), orig);
+
+	cvClearSeq(results);
+	cvReleaseMemStorage(&storage);
 	return 0;  
 } 
