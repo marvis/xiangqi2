@@ -331,9 +331,9 @@ int main(int argc, char ** argv)
 			//CV_CHAIN_CODE//CV_CHAIN_APPROX_NONE
 			);//函数cvFindContours从二值图像中检索轮廓，并返回检测到的轮廓的个数
 
-	cvSetZero(binImg);
-	//cvReleaseImage(&binImg);
-	//binImg = cropImage(image1, min_w, min_h, max_w-min_w+1, max_h-min_h+1);
+	//cvSetZero(binImg);
+	cvReleaseImage(&binImg);
+	binImg = cropImage(image1, min_w, min_h, max_w-min_w+1, max_h-min_h+1);
 
 	// there should be only one contour returned
 	/*if(0 && contour) // 将边界点进行多边形拟合, 不过效果不怎么好
