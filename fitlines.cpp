@@ -53,6 +53,12 @@ int main(int argc, char ** argv)
 	IplImage * gaussImage = cvCreateImage(cvGetSize(grayImage), IPL_DEPTH_8U, 1);
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	cvSmooth(grayImage, gaussImage, CV_GAUSSIAN, 5, 5); // 降噪
+	int min_radius = 28, max_radius = 40;
+	if(srcImage->width == 540)
+	{
+		min_radius = 20;
+		max_radius = 30;
+	}
 	CvSeq* results = cvHoughCircles(  //cvHoughCircles函数需要估计每一个像素梯度的方向，  
 			//因此会在内部自动调用cvSobel,而二值边缘图像的处理是比较难的  
 			gaussImage,  
@@ -62,7 +68,7 @@ int main(int argc, char ** argv)
 			srcImage->width/15,
 			100,
 			100,
-			30, 40
+			min_radius, max_radius// 28, 40 // 未转换为540*960的范围
 			);  
 	//printf("total circles = %d\n", results->total);	
 
@@ -108,24 +114,27 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	cout<<"circle num = "<<results->total<<endl;
+	cout<<"radius : ";
 	// 画圆圈
 	for( int i = 0; i < results->total; i++ )  
 	{
 		float* p = ( float* )cvGetSeqElem( results, i );  
 		//霍夫圆变换  
 		CvPoint pt = cvPoint( cvRound( p[0] ), cvRound( p[1] ) );  
-		//cvCircle(srcImage,  pt, cvRound(2), CV_RGB( 0x0, 0xff, 0x0 ), 2, CV_AA, 0);  //画圆函数  
+		cout<<p[2]<<" ";
+		cvCircle(srcImage,  pt, cvRound(2), CV_RGB( 0x0, 0xff, 0x0 ), 2, CV_AA, 0);  //画圆函数  
 		xcorners.push_back(cvRound(p[0]));
 		ycorners.push_back(cvRound(p[1]));
-
 	}
+	cout<<endl;
 
 	//开始画出每个点  
 	if (new_cornersCount>0)  
 	{  
 		for (i=0;i<new_cornersCount;i++)  
 		{  
-			//cvCircle(srcImage,cvPoint((int)(new_corners[i].x),(int)(new_corners[i].y)), 2,color,2,CV_AA,0);  
+			cvCircle(srcImage,cvPoint((int)(new_corners[i].x),(int)(new_corners[i].y)), 2,color,2,CV_AA,0);  
 			xcorners.push_back((int)(new_corners[i].x));
 			ycorners.push_back((int)(new_corners[i].y));
 		}  
@@ -370,14 +379,6 @@ int main(int argc, char ** argv)
 		ostringstream oss;
 		oss<<ypos<<","<<xpos;
 		cvPutText(srcImage, oss.str().c_str(), cvPoint(x1-30,y1-15), &font, CV_RGB(0,255,0));
-	}
-
-	for(int j = 0; j < ny; j++)
-	{
-		for(int i = 0; i < nx; i++)
-		{
-			CvPoint p = crossPoint(x_params[i], y_params[j]);
-		}
 	}
 
 	filename = filename + ".fit.png";

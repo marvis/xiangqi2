@@ -92,16 +92,19 @@ int main(int argc, char ** argv)
 	//xdata = smoothData(xdata, 1); // 窗口半径
 	//ydata = smoothData(ydata, 1);
 
-	int bst_x0 = 0, bst_xstep = 0;
+	int bst_x0 = 0;
+	double bst_xstep = 0;
 	double max_xscore = 0;
 	int min_xstep = width/10.0, max_xstep = width/8.0 + 0.5;
 	
-	for(int xstep = min_xstep; xstep <= max_xstep; xstep++)
+	for(double xstep = min_xstep; xstep <= max_xstep; xstep+=0.5)
 	{
+		//cout<<xstep<<" : "<<endl;
 		for(int x0 = 0; x0 + 8*xstep < width; x0++)
 		{
 			double score = 0.0;
-			for(int i = 0; i < 9; i++) score += xdata[x0 + i*xstep];
+			for(int i = 0; i < 9; i++) score += xdata[(int)(x0 + i*xstep)];
+			//cout<<"\t"<<x0<<" : "<<score<<endl;
 			if(score > max_xscore)
 			{
 				max_xscore = score;
@@ -111,16 +114,17 @@ int main(int argc, char ** argv)
 		}
 	}
 	
-	int bst_y0 = 0, bst_ystep = 0;
+	int bst_y0 = 0;
+	double bst_ystep = 0;
 	double max_yscore = 0;
 	int min_ystep = height/11.0, max_ystep = height/9.0 + 0.5;
 	
-	for(int ystep = min_ystep; ystep <= max_ystep; ystep++)
+	for(double ystep = min_ystep; ystep <= max_ystep; ystep+=0.5)
 	{
 		for(int y0 = 0; y0 + 9*ystep < height; y0++)
 		{
 			double score = 0.0;
-			for(int i = 0; i < 10; i++) score += ydata[y0 + i*ystep];
+			for(int i = 0; i < 10; i++) score += ydata[(int)(y0 + i*ystep)];
 			if(score > max_yscore)
 			{
 				max_yscore = score;
@@ -129,6 +133,8 @@ int main(int argc, char ** argv)
 			}
 		}
 	}
+	cout<<"bst_x0 = "<<bst_x0<<" bst_xstep = "<< bst_xstep<<endl;
+	cout<<"bst_y0 = "<<bst_y0<<" bst_ystep = "<< bst_ystep<<endl;
 
 	for(int i = 0; i < 9; i++)
 	{

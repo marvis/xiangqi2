@@ -6,7 +6,7 @@
 
 using namespace cv;
 using namespace std;
-#define DEBUG 1
+#define DEBUG 0
 
 IplImage * cropImage(IplImage * src, int x, int y, int width, int height)
 {
@@ -798,22 +798,40 @@ int main(int argc, char ** argv)
 	trPoint.x += min_w; trPoint.y += min_h;
 	blPoint.x += min_w; blPoint.y += min_h;
 	brPoint.x += min_w; brPoint.y += min_h;
-	IplImage * screenImg1 = cropImageToRect_False(image1, tlPoint, trPoint, blPoint, brPoint);
-	IplImage * screenImg2 = cropImage(screenImg1, 0, 0.156*screenImg1->height, screenImg1->width, 0.7*screenImg1->height);
-	//cvResize(screenImg1, screenImg2);
+	IplImage * screenImg1 = cropImageToRect(image1, tlPoint, trPoint, blPoint, brPoint);
+	if(1)
+	{
+		IplImage * screenImg2 = cvCreateImage(cvSize(540, 960), IPL_DEPTH_8U, screenImg1->nChannels);
+		cvResize(screenImg1, screenImg2);
+		IplImage * chessboardImg = cropImage(screenImg2, 0, 0.156*screenImg2->height, screenImg2->width, 0.7*screenImg2->height);
 
-	filename1 = filename0 + ".screen.png";
-	cvSaveImage(filename1.c_str(), screenImg1);
+		filename1 = filename0 + ".screen.png";
+		cvSaveImage(filename1.c_str(), screenImg2);
 
-	filename1 = filename0 + ".chess.png";
-	cvSaveImage(filename1.c_str(), screenImg2);
+		filename1 = filename0 + ".chess.png";
+		cvSaveImage(filename1.c_str(), chessboardImg);
+
+		cvReleaseImage(&screenImg2);
+		cvReleaseImage(&chessboardImg);
+	}
+	else
+	{
+		IplImage * chessboardImg = cropImage(screenImg1, 0, 0.156*screenImg1->height, screenImg1->width, 0.7*screenImg1->height);
+
+		filename1 = filename0 + ".screen.png";
+		cvSaveImage(filename1.c_str(), screenImg1);
+
+		filename1 = filename0 + ".chess.png";
+		cvSaveImage(filename1.c_str(), chessboardImg);
+
+		cvReleaseImage(&chessboardImg);
+	}
 
 	cvReleaseImage(&image0);
 	cvReleaseImage(&image1);
 	cvReleaseImage(&binImg);
 	cvReleaseImage(&drawImg);
 	cvReleaseImage(&screenImg1);
-	//cvReleaseImage(&screenImg2);
 	cvReleaseImage(&maskImg);
 
 	cvClearSeq(contour);
