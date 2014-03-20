@@ -147,6 +147,59 @@ IplImage * cropImageToRect(IplImage * src, CvPoint tlPoint, CvPoint trPoint, CvP
 	int height = sqrt(dx2*dx2 + dy2*dy2) + 0.5;
 	IplImage * dst = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, src->nChannels);
 	int nchannels = src->nChannels;
+	Point2f srcPoints[4];
+	Point2f dstPoints[4];
+	
+	srcPoints[0].x = 0;           dstPoints[0].x = tlPoint.x;
+	srcPoints[0].y = 0;           dstPoints[0].y = tlPoint.y;
+
+	srcPoints[1].x = width -1;    dstPoints[1].x = trPoint.x;
+	srcPoints[1].y = 0;           dstPoints[1].y = trPoint.y;
+
+	srcPoints[2].x = 0;           dstPoints[2].x = blPoint.x;
+	srcPoints[2].y = height - 1;  dstPoints[2].y = blPoint.y;
+
+	srcPoints[3].x = width - 1;   dstPoints[3].x = brPoint.x;
+	srcPoints[3].y = height - 1;  dstPoints[3].y = brPoint.y;
+
+	Mat t = getPerspectiveTransform(srcPoints,dstPoints);
+	printf("transform matrix\n");  
+    for(int i =0;i<3;i++)  
+    {  
+        printf("% .4f ",t.at<double>(0,i));  
+        printf("% .4f ",t.at<double>(1,i));  
+        printf("% .4f \n",t.at<double>(2,i));  
+    }
+
+	for(int j = 0; j < height; j++)
+	{
+		for(int i = 0; i < width; i++)
+		{
+			Mat sample = (Mat_<double>(3,1)<<i,j,1);
+			Mat r = t*sample;
+			double s = r.at<double>(2,0);
+			int x = round(r.at<double>(0,0)/s);
+			int y = round(r.at<double>(1,0)/s);
+
+			for(int c = 0; c < nchannels; c++)
+			{
+				CV_IMAGE_ELEM(dst, unsigned char, j, nchannels*i + c) = CV_IMAGE_ELEM(src, unsigned char, y, nchannels*x+c);
+			}
+		}
+	}
+	return dst;
+}
+
+IplImage * cropImageToRect_False(IplImage * src, CvPoint tlPoint, CvPoint trPoint, CvPoint blPoint, CvPoint brPoint)
+{
+	double dx1 =  (trPoint.x + brPoint.x)/2.0 - (tlPoint.x + blPoint.x)/2.0;
+	double dy1 =  (trPoint.y + brPoint.y)/2.0 - (tlPoint.y + blPoint.y)/2.0;
+	double dx2 = (tlPoint.x + trPoint.x)/2.0 - (blPoint.x + brPoint.x)/2.0;
+	double dy2 = (tlPoint.y + trPoint.y)/2.0 - (blPoint.y + brPoint.y)/2.0;
+	int width = sqrt(dx1*dx1 + dy1*dy1) + 0.5;
+	int height = sqrt(dx2*dx2 + dy2*dy2) + 0.5;
+	IplImage * dst = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, src->nChannels);
+	int nchannels = src->nChannels;
 	for(int j = 0; j < height; j++)
 	{
 		double lambdaj = j/(height-1.0);
@@ -745,7 +798,7 @@ int main(int argc, char ** argv)
 	trPoint.x += min_w; trPoint.y += min_h;
 	blPoint.x += min_w; blPoint.y += min_h;
 	brPoint.x += min_w; brPoint.y += min_h;
-	IplImage * screenImg1 = cropImageToRect(image1, tlPoint, trPoint, blPoint, brPoint);
+	IplImage * screenImg1 = cropImageToRect_False(image1, tlPoint, trPoint, blPoint, brPoint);
 	IplImage * screenImg2 = cropImage(screenImg1, 0, 0.156*screenImg1->height, screenImg1->width, 0.7*screenImg1->height);
 	//cvResize(screenImg1, screenImg2);
 
