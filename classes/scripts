@@ -1,0 +1,6 @@
+> trainfile; for i in {0..11}; do for j in train/$i/*.png; do ./hogfeat $j $i >> trainfile; done; done
+svm-scale -s rules trainfile > trainfile_scale
+svm-train trainfile_scale
+> testfile; for i in {0..11}; do for j in test/$i/*.png; do ./hogfeat $j $i >> testfile; done; done
+svm-scale -r rules testfile > testfile_scale
+svm-predict testfile_scale trainfile_scale.model output
