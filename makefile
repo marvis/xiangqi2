@@ -1,5 +1,6 @@
 all:
-	g++ -o recognizechess recognizechess.cpp `pkg-config --cflags --libs opencv`
+	g++ -o xiangqi2 xiangqi2.cpp svm.cpp classes/feature.cpp `pkg-config --cflags --libs opencv`
+	#g++ -o recognizechess recognizechess.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o findgrids findgrids.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o findscreen findscreen.cpp `pkg-config --cflags --libs opencv`
 	#g++ -o fitlines fitlines.cpp `pkg-config --cflags --libs opencv`
